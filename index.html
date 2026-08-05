@@ -516,7 +516,6 @@
   }
   .modal-close:hover{ color:var(--gold-2); }
 
-  /* ---- نافذة رقم الدعم المادي ---- */
   .donation-note{
     font-size:12.5px;
     line-height:1.8;
@@ -565,11 +564,52 @@
   }
   .copy-number-btn:active{ transform:scale(.97); }
   .copy-number-btn.copied{ background:linear-gradient(90deg, #6fd08c, #2e9e56); color:#0a1a0e; }
+  .copy-number-btn.entrance{
+    animation: copyBtnPop .5s cubic-bezier(.34,1.56,.64,1) forwards, copyBtnGlow 1.8s ease-in-out .5s infinite;
+  }
+  @keyframes copyBtnPop{
+    0%{ transform:scale(.55); opacity:0; }
+    65%{ transform:scale(1.1); opacity:1; }
+    100%{ transform:scale(1); opacity:1; }
+  }
+  @keyframes copyBtnGlow{
+    0%,100%{ box-shadow:0 0 0 rgba(245,214,122,0); }
+    50%{ box-shadow:0 0 24px rgba(245,214,122,0.6); }
+  }
+  .donation-number-box.entrance{
+    animation: numberBoxRiseIn .6s ease-out forwards;
+  }
+  @keyframes numberBoxRiseIn{
+    0%{ opacity:0; transform:translateY(-10px) scale(.92); }
+    100%{ opacity:1; transform:translateY(0) scale(1); }
+  }
   .donation-thanks{
     margin-top:18px;
     font-size:14px;
     font-weight:800;
     color:var(--text);
+  }
+  #donationModal .modal-box{
+    border-color:var(--gold-1);
+    box-shadow:0 20px 70px rgba(245,214,122,0.35), 0 0 0 1px rgba(245,214,122,0.12) inset;
+  }
+  #donationModal.open .modal-box{
+    animation: donationBoxEntrance .6s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes donationBoxEntrance{
+    0%{ transform:translateY(30px) scale(.82) rotate(-3deg); opacity:0; }
+    60%{ transform:translateY(-4px) scale(1.04) rotate(1.5deg); opacity:1; }
+    100%{ transform:translateY(0) scale(1) rotate(0); opacity:1; }
+  }
+  #donationModal.open .modal-box h3{
+    animation: donationHeartBeat 1.7s ease-in-out .65s infinite;
+  }
+  @keyframes donationHeartBeat{
+    0%,100%{ transform:scale(1); }
+    15%{ transform:scale(1.14); }
+    30%{ transform:scale(1); }
+    45%{ transform:scale(1.09); }
+    60%{ transform:scale(1); }
   }
 
   /* ---- لوحة تحكم الأدمن المخفية ---- */
@@ -919,8 +959,6 @@
     }
   });
 
-  var allowNextCopy = false;
-
   copyNumberBtn.addEventListener('click', function(){
     var numberText = donationNumber.textContent.trim();
 
@@ -952,26 +990,17 @@
       document.body.appendChild(tempInput);
       tempInput.focus();
       tempInput.select();
-      allowNextCopy = true;
       document.execCommand('copy');
-      allowNextCopy = false;
       document.body.removeChild(tempInput);
       onDone();
     }catch(err){ /* تجاهل أي خطأ في النسخ */ }
   }
 
-  // ---- منع النسخ / التحديد / الضغط بالزر الأيمن (باستثناء رقم الدعم المادي) ----
+  // ---- منع النسخ / التحديد / الضغط بالزر الأيمن ----
   document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
-  document.addEventListener('copy', function(e){
-    if(allowNextCopy) return;
-    if(e.target && e.target.closest && e.target.closest('#donationNumber')) return;
-    e.preventDefault();
-  });
+  document.addEventListener('copy', function(e){ e.preventDefault(); });
   document.addEventListener('cut', function(e){ e.preventDefault(); });
-  document.addEventListener('selectstart', function(e){
-    if(e.target && e.target.closest && e.target.closest('#donationNumber')) return;
-    e.preventDefault();
-  });
+  document.addEventListener('selectstart', function(e){ e.preventDefault(); });
   document.addEventListener('dragstart', function(e){ e.preventDefault(); });
 
   // ---- تساقط القلوب من الأعلى ----
@@ -1041,7 +1070,7 @@
     cards.forEach(function(card, idx){
       var titleEl = card.querySelector('.title');
       var subEl = card.querySelector('.sub');
-      var isModalTrigger = card.id === 'contactCard';
+      var isModalTrigger = (card.id === 'contactCard' || card.id === 'donationCard');
 
       var row = document.createElement('div');
       row.className = 'admin-link-row';
@@ -1088,7 +1117,9 @@
         var urlNote = document.createElement('div');
         urlNote.className = 'admin-note';
         urlNote.style.marginTop = '2px';
-        urlNote.textContent = 'هذا الكارت بيفتح نافذة اختيار (تيليجرام / واتساب) مش رابط مباشر.';
+        urlNote.textContent = (card.id === 'donationCard')
+          ? 'هذا الكارت بيفتح نافذة رقم الدعم المادي مش رابط مباشر.'
+          : 'هذا الكارت بيفتح نافذة اختيار (تيليجرام / واتساب) مش رابط مباشر.';
         row.appendChild(urlLbl2);
         row.appendChild(urlNote);
       }else{
