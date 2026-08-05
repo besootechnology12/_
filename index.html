@@ -919,6 +919,8 @@
     }
   });
 
+  var allowNextCopy = false;
+
   copyNumberBtn.addEventListener('click', function(){
     var numberText = donationNumber.textContent.trim();
 
@@ -950,17 +952,26 @@
       document.body.appendChild(tempInput);
       tempInput.focus();
       tempInput.select();
+      allowNextCopy = true;
       document.execCommand('copy');
+      allowNextCopy = false;
       document.body.removeChild(tempInput);
       onDone();
     }catch(err){ /* تجاهل أي خطأ في النسخ */ }
   }
 
-  // ---- منع النسخ / التحديد / الضغط بالزر الأيمن ----
+  // ---- منع النسخ / التحديد / الضغط بالزر الأيمن (باستثناء رقم الدعم المادي) ----
   document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
-  document.addEventListener('copy', function(e){ e.preventDefault(); });
+  document.addEventListener('copy', function(e){
+    if(allowNextCopy) return;
+    if(e.target && e.target.closest && e.target.closest('#donationNumber')) return;
+    e.preventDefault();
+  });
   document.addEventListener('cut', function(e){ e.preventDefault(); });
-  document.addEventListener('selectstart', function(e){ e.preventDefault(); });
+  document.addEventListener('selectstart', function(e){
+    if(e.target && e.target.closest && e.target.closest('#donationNumber')) return;
+    e.preventDefault();
+  });
   document.addEventListener('dragstart', function(e){ e.preventDefault(); });
 
   // ---- تساقط القلوب من الأعلى ----
