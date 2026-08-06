@@ -38,7 +38,7 @@
     touch-action:manipulation;
   }
 
-  /* منع تحديد و نسخ محتوى الموقع */
+  /* منع تحديد و نسخ محتوى الموقع العادي */
   body{
     -webkit-user-select:none;
     -moz-user-select:none;
@@ -78,7 +78,7 @@
     .page{ max-width:520px; }
   }
 
-  /* ---- Preloader / entrance effect ---- */
+  /* ---- Preloader ---- */
   .preloader{
     position:fixed;
     inset:0;
@@ -163,7 +163,7 @@
     z-index:0;
   }
 
-  /* ---- Header / logo block ---- */
+  /* ---- Header ---- */
   .brand{
     display:flex;
     flex-direction:column;
@@ -366,7 +366,9 @@
     cursor: pointer;
     transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
     box-shadow: 0 4px 12px rgba(201,152,47,0.2);
-    z-index: 2;
+    position: relative;
+    z-index: 5;
+    user-select: none;
   }
   .copy-inline-btn:active { transform: scale(.92); }
   .copy-inline-btn.copied {
@@ -397,9 +399,7 @@
     z-index:1;
   }
 
-  footer span{
-    color:var(--gold-2);
-  }
+  footer span{ color:var(--gold-2); }
 
   @media (max-width:360px){
     .logo-frame{width:112px;}
@@ -431,9 +431,7 @@
     animation:riseIn .7s ease-out .45s forwards;
   }
 
-  .brand .rule{
-    animation-delay:.6s;
-  }
+  .brand .rule{ animation-delay:.6s; }
 
   .link-card{
     opacity:0;
@@ -447,9 +445,7 @@
   .link-card:nth-child(5){animation-delay:1.18s;}
   .link-card:nth-child(6){animation-delay:1.30s;}
 
-  .link-card.bottom-group-start{
-    margin-top:8px;
-  }
+  .link-card.bottom-group-start{ margin-top:8px; }
 
   footer{
     opacity:0;
@@ -464,7 +460,7 @@
     }
   }
 
-  /* ---- Contact choice modal ---- */
+  /* ---- Modal ---- */
   .modal-overlay{
     position:fixed;
     inset:0;
@@ -555,7 +551,7 @@
   }
   .modal-close:hover{ color:var(--gold-2); }
 
-  /* ---- لوحة تحكم الأدمن ---- */
+  /* ---- Admin Box ---- */
   .admin-box{
     width:100%;
     max-width:440px;
@@ -714,7 +710,7 @@
         <span class="title">💰ادعمني محفظه / كاش</span>
         <span class="wallet-number" id="walletNumberTxt">01070670395</span>
       </div>
-      <button class="copy-inline-btn" id="copyInlineBtn">نسخ</button>
+      <button type="button" class="copy-inline-btn" id="copyInlineBtn">نسخ</button>
     </div>
     
     <a class="link-card" href="https://tinyurl.com/3d3v8rvb" target="_blank" rel="noopener">
@@ -828,7 +824,8 @@
 </div>
 
 <script>
-  var STORAGE_KEY = 'besooSiteOverride';
+  var STORAGE_KEY = 'besooSiteOverride_v2';
+
   (function applySavedOverride(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -842,18 +839,23 @@
 
   window.addEventListener('load', function(){
     setTimeout(function(){
-      document.getElementById('preloader').classList.add('hide');
+      var preloader = document.getElementById('preloader');
+      if(preloader) preloader.classList.add('hide');
     }, 900);
   });
 
-  var contactCard = document.getElementById('contactCard');
-  var contactModal = document.getElementById('contactModal');
-  var modalCloseBtn = document.getElementById('modalCloseBtn');
+  // Modal handlers
+  document.addEventListener('click', function(e){
+    var contactCard = e.target.closest('#contactCard');
+    if(contactCard){
+      var contactModal = document.getElementById('contactModal');
+      if(contactModal) contactModal.classList.add('open');
+    }
+  });
 
-  if(contactCard && contactModal){
-    contactCard.addEventListener('click', function(){
-      contactModal.classList.add('open');
-    });
+  var modalCloseBtn = document.getElementById('modalCloseBtn');
+  var contactModal = document.getElementById('contactModal');
+  if(modalCloseBtn && contactModal){
     modalCloseBtn.addEventListener('click', function(){
       contactModal.classList.remove('open');
     });
@@ -864,60 +866,80 @@
     });
   }
 
-  var copyInlineBtn = document.getElementById('copyInlineBtn');
-  var walletNumberTxt = document.getElementById('walletNumberTxt');
+  // ---- سكربت النسخ الذكي الشغال لجميع الأجهزة والأشخاص ----
   var copyResetTimer = null;
+  var isProgrammaticCopy = false;
 
-  if(copyInlineBtn && walletNumberTxt){
-    copyInlineBtn.addEventListener('click', function(e){
-      e.stopPropagation(); 
-      var numberText = walletNumberTxt.textContent.trim();
+  document.addEventListener('click', function(e){
+    var copyBtn = e.target.closest('#copyInlineBtn');
+    if(!copyBtn) return;
 
-      function showCopied(){
-        copyInlineBtn.textContent = '✅ تم';
-        copyInlineBtn.classList.add('copied');
-        clearTimeout(copyResetTimer);
-        copyResetTimer = setTimeout(function(){
-          copyInlineBtn.textContent = 'نسخ';
-          copyInlineBtn.classList.remove('copied');
-        }, 2000);
-      }
+    e.stopPropagation();
+    e.preventDefault();
 
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(numberText).then(showCopied).catch(function(){
-          fallbackCopy(numberText, showCopied);
-        });
-      }else{
+    var walletTxt = document.getElementById('walletNumberTxt');
+    if(!walletTxt) return;
+    var numberText = walletTxt.textContent.trim();
+
+    function showCopied(){
+      copyBtn.textContent = '✅ تم';
+      copyBtn.classList.add('copied');
+      clearTimeout(copyResetTimer);
+      copyResetTimer = setTimeout(function(){
+        copyBtn.textContent = 'نسخ';
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    }
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(numberText).then(showCopied).catch(function(){
         fallbackCopy(numberText, showCopied);
-      }
-    });
-  }
+      });
+    }else{
+      fallbackCopy(numberText, showCopied);
+    }
+  });
 
   function fallbackCopy(text, onDone){
     try{
+      isProgrammaticCopy = true;
       var tempInput = document.createElement('textarea');
       tempInput.value = text;
       tempInput.style.position = 'fixed';
+      tempInput.style.left = '-9999px';
       tempInput.style.opacity = '0';
       document.body.appendChild(tempInput);
       tempInput.focus();
       tempInput.select();
       document.execCommand('copy');
       document.body.removeChild(tempInput);
+      isProgrammaticCopy = false;
       onDone();
-    }catch(err){}
+    }catch(err){
+      isProgrammaticCopy = false;
+    }
   }
 
+  // منع التحديد والنسخ العشوائي بدون تعطيل زر النسخ
   document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
-  document.addEventListener('copy', function(e){ e.preventDefault(); });
+  document.addEventListener('copy', function(e){ 
+    if(!isProgrammaticCopy){
+      e.preventDefault(); 
+    }
+  });
   document.addEventListener('cut', function(e){ e.preventDefault(); });
-  document.addEventListener('selectstart', function(e){ e.preventDefault(); });
+  document.addEventListener('selectstart', function(e){ 
+    if(e.target && e.target.closest('.admin-box')) return;
+    e.preventDefault(); 
+  });
   document.addEventListener('dragstart', function(e){ e.preventDefault(); });
 
+  // ---- Falling Hearts ----
   var heartsLayer = document.getElementById('heartsLayer');
   var heartSymbols = ['❤️','💛','💫'];
 
   function spawnHeart(){
+    if(!heartsLayer) return;
     var heart = document.createElement('span');
     heart.className = 'heart';
     heart.textContent = heartSymbols[Math.floor(Math.random()*heartSymbols.length)];
@@ -936,30 +958,29 @@
   setInterval(spawnHeart, 450);
   for(var i=0;i<6;i++){ setTimeout(spawnHeart, i*200); }
 
-  // =========================================================
-  // ---- لوحة تحكم الأدمن: فتح بالضغط 5 مرات على الشعار ----
-  // =========================================================
+  // ---- لوحة تحكم الأدمن ----
   var ADMIN_PASSWORD = 'Besoo2026!';
-
   var logoEl = document.querySelector('.logo-frame');
   var logoClicks = 0;
   var logoClickTimer = null;
 
-  logoEl.addEventListener('click', function(){
-    logoClicks++;
-    clearTimeout(logoClickTimer);
-    logoClickTimer = setTimeout(function(){ logoClicks = 0; }, 1200);
-    if(logoClicks >= 5){
-      logoClicks = 0;
-      var pass = window.prompt('أدخل كلمة مرور الأدمن:');
-      if(pass === null) return;
-      if(pass === ADMIN_PASSWORD){
-        openAdminPanel();
-      }else{
-        alert('كلمة مرور غير صحيحة');
+  if(logoEl){
+    logoEl.addEventListener('click', function(){
+      logoClicks++;
+      clearTimeout(logoClickTimer);
+      logoClickTimer = setTimeout(function(){ logoClicks = 0; }, 1200);
+      if(logoClicks >= 5){
+        logoClicks = 0;
+        var pass = window.prompt('أدخل كلمة مرور الأدمن:');
+        if(pass === null) return;
+        if(pass === ADMIN_PASSWORD){
+          openAdminPanel();
+        }else{
+          alert('كلمة مرور غير صحيحة');
+        }
       }
-    }
-  });
+    });
+  }
 
   var adminModal = document.getElementById('adminModal');
   var adminLinksList = document.getElementById('adminLinksList');
@@ -1010,7 +1031,7 @@
       titleInput.value = titleEl ? titleEl.textContent.trim() : '';
 
       var subLbl = document.createElement('label');
-      subLbl.textContent = isDonationCard ? 'رقم المحفظة (الوصف)' : 'الوصف';
+      subLbl.textContent = isDonationCard ? 'رقم المحفظة' : 'الوصف';
       var subInput = document.createElement('input');
       subInput.type = 'text';
       subInput.value = subEl ? subEl.textContent.trim() : '';
@@ -1027,7 +1048,7 @@
         var urlNote = document.createElement('div');
         urlNote.className = 'admin-note';
         urlNote.style.marginTop = '2px';
-        urlNote.textContent = 'هذا الكارت بيفتح نافذة اختيار (تيليجرام / واتساب) مش رابط مباشر.';
+        urlNote.textContent = 'هذا الكارت بيفتح نافذة اختيار (تيليجرام / واتساب).';
         row.appendChild(urlLbl2);
         row.appendChild(urlNote);
       } else if(isDonationCard) {
@@ -1036,7 +1057,7 @@
         var urlNote3 = document.createElement('div');
         urlNote3.className = 'admin-note';
         urlNote3.style.marginTop = '2px';
-        urlNote3.textContent = 'هذا الكارت يعرض رقم المحفظة وزر النسخ المباشر من الخارج بدون نافذة إضافية.';
+        urlNote3.textContent = 'هذا الكارت يعرض رقم المحفظة وزر النسخ المباشر.';
         row.appendChild(urlLbl3);
         row.appendChild(urlNote3);
       } else {
@@ -1109,13 +1130,14 @@
     applyAdminChangesToDOM();
     saveOverrideToStorage();
     adminModal.classList.remove('open');
-    alert('تم الحفظ مؤقتاً ✅ (لمعاينة التعديلات).');
+    alert('تم الحفظ ومعاينة التعديلات ✅');
   });
 
   document.getElementById('adminExportBtn').addEventListener('click', function(){
     applyAdminChangesToDOM();
-    var wasPreloaderHidden = document.getElementById('preloader').classList.contains('hide');
-    document.getElementById('preloader').classList.remove('hide');
+    var preloader = document.getElementById('preloader');
+    var wasPreloaderHidden = preloader ? preloader.classList.contains('hide') : true;
+    if(preloader) preloader.classList.remove('hide');
     adminModal.classList.remove('open');
     if(contactModal) contactModal.classList.remove('open');
     heartsLayer.innerHTML = '';
@@ -1131,11 +1153,11 @@
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
 
-    if(wasPreloaderHidden) document.getElementById('preloader').classList.add('hide');
+    if(wasPreloaderHidden && preloader) preloader.classList.add('hide');
   });
 
   document.getElementById('adminResetBtn').addEventListener('click', function(){
-    if(confirm('هل تريد استعادة الإعدادات الافتراضية ومسح كل التعديلات المحفوظة؟')){
+    if(confirm('هل تريد استعادة الإعدادات الافتراضية ومسح التعديلات المحفوظة؟')){
       localStorage.removeItem(STORAGE_KEY);
       location.reload();
     }
