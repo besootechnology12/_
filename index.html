@@ -94,7 +94,7 @@
   .preloader.hide{ opacity:0; visibility:hidden; pointer-events:none; }
   .preloader-logo{
     width:110px; height:110px; border-radius:50%;
-    background:#fff;
+    background:#000;
     box-shadow:0 0 40px rgba(201,152,47,0.55);
     animation:preloaderPulse 1.1s ease-in-out infinite;
     overflow:hidden;
@@ -177,6 +177,7 @@
   .logo-frame{
     position:relative;
     width:132px;
+    height:132px;
     margin-bottom:6px;
     cursor: pointer;
   }
@@ -195,12 +196,13 @@
 
   .logo-frame img{
     width:100%;
+    height:100%;
     display:block;
     border-radius:50%;
-    background:#fff;
+    background:#000;
     border:3px solid var(--gold-2);
     box-shadow:0 8px 22px rgba(201,152,47,0.35);
-    image-rendering:-webkit-optimize-contrast;
+    object-fit:cover;
   }
 
   .brand p{
@@ -254,8 +256,8 @@
     position:relative;
     display:flex;
     align-items:center;
-    gap:14px;
-    padding:14px 18px;
+    gap:12px;
+    padding:14px 16px;
     min-height:60px;
     background:linear-gradient(180deg, var(--card), #060606);
     border:1.5px solid var(--line);
@@ -324,7 +326,7 @@
 
   .link-text .title{
     font-weight:900;
-    font-size:16px;
+    font-size:15.5px;
     color:var(--text);
     line-height:1.35;
   }
@@ -353,13 +355,15 @@
     -webkit-user-select: text;
   }
 
-  /* تحسين تصميم زر النسخ لضمان الظهور والعمل الفوري */
+  /* تصميم زر النسخ لضمان الظهور والعمل الفوري على جميع الشاشات */
   .copy-inline-btn {
-    flex: 0 0 auto;
+    flex: 0 0 auto !important;
+    shrink: 0 !important;
+    -webkit-flex-shrink: 0 !important;
     background: linear-gradient(90deg, var(--gold-1), var(--gold-2));
     color: #141414;
     border: none;
-    padding: 8px 16px;
+    padding: 8px 14px;
     border-radius: 10px;
     font-family: 'Cairo', sans-serif;
     font-weight: 800;
@@ -369,7 +373,11 @@
     box-shadow: 0 4px 12px rgba(201,152,47,0.3);
     z-index: 10;
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    margin-inline-start: auto;
   }
   .copy-inline-btn:active { transform: scale(.92); }
   .copy-inline-btn.copied {
@@ -405,12 +413,12 @@
   }
 
   @media (max-width:360px){
-    .logo-frame{width:112px;}
-    .link-card{padding:12px 14px;}
-    .link-text .title{ font-size:14.5px; }
-    .link-text .sub{ font-size:11.5px; }
+    .logo-frame{width:112px; height:112px;}
+    .link-card{padding:12px 10px; gap:8px;}
+    .link-text .title{ font-size:14px; }
+    .link-text .sub{ font-size:11px; }
     .wallet-number { font-size: 13.5px; }
-    .copy-inline-btn { padding: 6px 12px; font-size: 12px; }
+    .copy-inline-btn { padding: 6px 10px; font-size: 12px; }
   }
 
   @keyframes riseIn{
@@ -678,7 +686,7 @@
 <body>
 
 <div class="preloader" id="preloader">
-  <div class="preloader-logo"><img src="images/image1.png" alt="Besoo Technology"></div>
+  <div class="preloader-logo"><img src="11zon_cropped.png" alt="Besoo Technology"></div>
   <div class="preloader-text">بيسو تكنولوجي</div>
 </div>
 
@@ -689,7 +697,7 @@
 
   <div class="brand">
     <div class="logo-frame">
-      <img class="logo-img" src="images/image1.png" alt="Besoo Technology logo">
+      <img class="logo-img" src="11zon_cropped.png" alt="Besoo Technology logo">
     </div>
     <p id="siteTagline">❤️ ادعـم المحتـوى المفيـد دائمـاً 🧡</p>
     <p class="glow-name" id="siteName">🤍 بيـسو تكنولـوجـي 💚</p>
@@ -709,12 +717,13 @@
       <svg class="arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"></path></svg>
     </a>
     
+    <!-- كارت المحفظة الكاش النسخ المباشر بدون أي نافذة جديدة -->
     <div class="link-card" id="donationCard">
       <div class="icon">
         <img src="images/image3.jpg" alt="محفظة الكاش">
       </div>
       <div class="link-text">
-        <span class="title">💰ادعمني محفظه / كاش</span>
+        <span class="title">💰 ادعمني محفظه / كاش</span>
         <span class="wallet-number" id="walletNumberTxt">01070670395</span>
       </div>
       <button class="copy-inline-btn" id="copyInlineBtn" type="button">نسخ</button>
@@ -867,35 +876,45 @@
     });
   }
 
-  /* ---- دالة نسخ الرقم الاحترافية والمتوافقة مع كافة الهواتف والمتصفحات المدمجة ---- */
+  /* ---- دالة نسخ الرقم المباشرة بدون ظهور أي نوافذ ---- */
   function bindCopyButton() {
+    var donationCard = document.getElementById('donationCard');
     var copyInlineBtn = document.getElementById('copyInlineBtn');
     var walletNumberTxt = document.getElementById('walletNumberTxt');
     var copyResetTimer = null;
 
-    if(copyInlineBtn && walletNumberTxt){
-      copyInlineBtn.addEventListener('click', function(e){
-        e.stopPropagation(); 
-        var numberText = walletNumberTxt.textContent.trim();
+    function handleCopy(e) {
+      if(e) e.stopPropagation(); 
+      var numberText = walletNumberTxt ? walletNumberTxt.textContent.trim() : '01070670395';
 
-        function showCopied(){
-          copyInlineBtn.textContent = '✅ تم';
+      function showCopied() {
+        if(copyInlineBtn) {
+          copyInlineBtn.textContent = '✅ تم النسخ';
           copyInlineBtn.classList.add('copied');
-          clearTimeout(copyResetTimer);
-          copyResetTimer = setTimeout(function(){
+        }
+        clearTimeout(copyResetTimer);
+        copyResetTimer = setTimeout(function(){
+          if(copyInlineBtn) {
             copyInlineBtn.textContent = 'نسخ';
             copyInlineBtn.classList.remove('copied');
-          }, 2000);
-        }
+          }
+        }, 2000);
+      }
 
-        if(navigator.clipboard && window.isSecureContext){
-          navigator.clipboard.writeText(numberText).then(showCopied).catch(function(){
-            fallbackCopy(numberText, showCopied);
-          });
-        }else{
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(numberText).then(showCopied).catch(function(){
           fallbackCopy(numberText, showCopied);
-        }
-      });
+        });
+      } else {
+        fallbackCopy(numberText, showCopied);
+      }
+    }
+
+    if(copyInlineBtn) {
+      copyInlineBtn.onclick = handleCopy;
+    }
+    if(donationCard) {
+      donationCard.onclick = handleCopy;
     }
   }
 
@@ -916,10 +935,10 @@
     }catch(err){}
   }
 
-  // تفعيل زر النسخ
+  // تفعيل زر النسخ المباشر
   bindCopyButton();
 
-  /* ---- منع القوائم الجانبية والسحب دون تعطيل زر النسخ البرمجي ---- */
+  /* ---- منع القوائم الجانبية والسحب دون تعطيل زر النسخ ---- */
   document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
   document.addEventListener('cut', function(e){ e.preventDefault(); });
   document.addEventListener('selectstart', function(e){
@@ -1053,7 +1072,7 @@
         var urlNote3 = document.createElement('div');
         urlNote3.className = 'admin-note';
         urlNote3.style.marginTop = '2px';
-        urlNote3.textContent = 'هذا الكارت يعرض رقم المحفظة وزر النسخ المباشر من الخارج بدون نافذة إضافية.';
+        urlNote3.textContent = 'هذا الكارت يعرض رقم المحفظة وزر النسخ المباشر بدون أي نافذة منبثقة.';
         row.appendChild(urlLbl3);
         row.appendChild(urlNote3);
       } else {
